@@ -3,12 +3,15 @@ import mediapipe as mp
 import pyautogui
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QColor, QPalette
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QSlider, QVBoxLayout, QPushButton, QTextEdit
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QSlider, QVBoxLayout, QPushButton, QComboBox
+import sys
 
 pyautogui.PAUSE = 0.01
 
 threshold = 0.2
 speed = 20
+
+valid_cams = []
 
 MIN_THRESHOLD_VALUE = 0
 MAX_THRESHOLD_VALUE = 70
@@ -17,34 +20,39 @@ MAX_SPEED_VALUE = 100
 DEFAULT_SPEED_VALUE = 20
 DEFAULT_THRESHOLD_VALUE = int(threshold * 100)
 DEFAULT_TICK_VALUE = 5
+CAMERA = 0
 
 ESCAPE_BUTTON = 27
 
 def detect_cameras():
+    global valid_cams
     # detect all connected webcams
-    valid_cams = []
     for i in range(5):
         cap = cv2.VideoCapture(i)
-        if cap is not None and cap.isOpened():
-            valid_cams.append(i)
-            print('Found video source:', i)
+        try:
+            if cap is not None and cap.isOpened():
+                valid_cams.append(i)
+                print('Found video source:', i)
+        except Exception as e:
+            print(e)
+
     return valid_cams
 
-def main(is_running):
+valid_cams = detect_cameras()
+if not valid_cams:
+    print("No valid cameras")
+
+
+def main():
     mp_face_detection = mp.solutions.face_detection
 
     # Initialize face detection
     face_detection = mp_face_detection.FaceDetection(model_selection=1, min_detection_confidence=0.5)
 
     # Load video using OpenCV
-    valid_cams = detect_cameras()
-    if not valid_cams:
-        print("No valid cameras")
-        return
+    video = cv2.VideoCapture(CAMERA)
 
-    video = cv2.VideoCapture(0)
-
-    while is_running():
+    while True:
         ret, frame = video.read()
 
         if not ret:
@@ -78,7 +86,7 @@ def main(is_running):
                 bbox_height = int(bbox.height * h)
                 xmax = xmin + bbox_width
                 ymax = ymin + bbox_height
-
+                
                 # Draw bounding box rectangle and label on the frame
                 cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), (0, 255, 0), 2)
                 cv2.putText(frame, 'Face', (xmin, ymin - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
@@ -95,6 +103,7 @@ def main(is_running):
 
         # Display the frame
         cv2.imshow('Face Detection', frame)
+        
 
         if cv2.waitKey(10) & 0xFF == ESCAPE_BUTTON or cv2.getWindowProperty('Face Detection', cv2.WND_PROP_VISIBLE) < 1:
             break
@@ -102,7 +111,6 @@ def main(is_running):
     # Release the video capture and close all windows
     video.release()
     cv2.destroyAllWindows()
-
 
 def update_threshold(value):
     global threshold
@@ -127,18 +135,22 @@ class ConfigWindow(QWidget):
 
         layout = QVBoxLayout()
 
+        # App Name
         name_label = QLabel("AutoScroller V1.0")
         name_label.setFont(QFont("Arial", 22, QFont.Bold))
         layout.addWidget(name_label)
 
-        console_label = QLabel("Log Console")
-        console_label.setFont(QFont("Arial", 12))
-        layout.addWidget(console_label)
+        # Camera Selection
+        camera_label = QLabel("Available Cameras")
+        camera_label.setFont(QFont("Arial", 12))
+        layout.addWidget(camera_label)
 
-        self.console = QTextEdit()
-        self.console.setReadOnly(True)
-        layout.addWidget(self.console)
+        self.camera_dropdown = QComboBox()
+        self.camera_dropdown.addItems([str(cam) for cam in valid_cams])
+        self.camera_dropdown.currentIndexChanged.connect(self.update_camera)
+        layout.addWidget(self.camera_dropdown)
 
+        # Speed
         speed_label = QLabel("Scroll Speed")
         speed_label.setFont(QFont("Arial", 12))
         layout.addWidget(speed_label)
@@ -174,12 +186,20 @@ class ConfigWindow(QWidget):
         layout.addWidget(self.start_button)
 
         self.setLayout(layout)
+    
+    def update_camera(self):
+        global CAMERA
+        CAMERA = int(self.camera_dropdown.currentText())
+        print(CAMERA)
+        print(f"Updated source to {CAMERA}")
+
 
     def on_click_start(self):
         self.start_button.setEnabled(False)  # Disable the start button
+        print("Starting Face Detection...")
+
         try:
-            is_running = True
-            main(lambda: is_running)
+            main()
         except Exception as e:
             print(f"An error occurred: {str(e)}")
         finally:
@@ -201,8 +221,11 @@ class ConfigWindow(QWidget):
         QApplication.setPalette(palette)
 
 
-app = QApplication([])
-config_window = ConfigWindow()
-config_window.show()
-app.setStyle("Fusion")
-app.exec_()
+if __name__ == "__main__":
+    app = QApplication([])
+    config_window = ConfigWindow()
+    config_window.show()
+    app.setStyle("Fusion")
+    app.exec_()
+
+
