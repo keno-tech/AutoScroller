@@ -4,7 +4,6 @@ import pyautogui
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QColor, QPalette
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QSlider, QVBoxLayout, QPushButton, QComboBox
-import sys
 
 pyautogui.PAUSE = 0.01
 
@@ -27,7 +26,7 @@ ESCAPE_BUTTON = 27
 def detect_cameras():
     global valid_cams
     # detect all connected webcams
-    for i in range(5):
+    for i in range(-1, 3):
         cap = cv2.VideoCapture(i)
         try:
             if cap is not None and cap.isOpened():
@@ -47,7 +46,7 @@ def main():
     mp_face_detection = mp.solutions.face_detection
 
     # Initialize face detection
-    face_detection = mp_face_detection.FaceDetection(model_selection=1, min_detection_confidence=0.5)
+    face_detection = mp_face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.5)
 
     # Load video using OpenCV
     video = cv2.VideoCapture(CAMERA)
@@ -57,7 +56,9 @@ def main():
             ret, frame = video.read()
 
             if not ret:
-                break
+                print("Ignoring empty frame, retry")
+                return
+
             frame = cv2.flip(frame, 1)
             # Convert the BGR image to RGB
             rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -106,7 +107,9 @@ def main():
             cv2.imshow('Face Detection', frame)
             
 
-            if cv2.waitKey(10) & 0xFF == ESCAPE_BUTTON or cv2.getWindowProperty('Face Detection', cv2.WND_PROP_VISIBLE) < 1:
+            if cv2.waitKey(10) & 0xFF == ord('q') or \
+                cv2.waitKey(10) & 0xFF == ESCAPE_BUTTON or \
+                cv2.getWindowProperty('Face Detection', cv2.WND_PROP_VISIBLE) < 1:
                 break
 
         # Release the video capture and close all windows
@@ -202,6 +205,8 @@ class ConfigWindow(QWidget):
 
 
     def on_click_start(self):
+        import traceback
+
         self.start_button.setEnabled(False)  # Disable the start button
         print("Starting Face Detection...")
 
@@ -209,6 +214,8 @@ class ConfigWindow(QWidget):
             main()
         except Exception as e:
             print(f"An error occurred: {str(e)}")
+            traceback.print_exc()
+
         finally:
             self.start_button.setEnabled(True)  # Enable the start button again
 
