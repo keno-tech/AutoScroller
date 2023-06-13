@@ -1,5 +1,6 @@
 ﻿# AutoScroller 
 ![AutoScroller](https://github.com/keno-tech/AutoScroller/assets/122965422/84c8a39f-9a7a-4d43-a632-cd6122ffd7a9)
+![NoHands](https://github.com/keno-tech/AutoScroller/assets/122965422/6e7b99f5-2057-4740-82a0-c8a6103bd360)
 
 
 # Overview
