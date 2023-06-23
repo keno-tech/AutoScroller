@@ -18,6 +18,6 @@ Press "q" or "esc" to exit. You can also cover your face with your hand to stop 
 3. Configure the camera selection / speed / threshold
 4. Click Start  
 
-NOTE: Avast marks this as virus, you have to disable it first then open it https://www.virustotal.com/gui/file/fb9f42e76d792921e97cd003a565eebd1aeb5b8c542bf449980e8cbd78a8deda?nocache=1
+NOTE: Avast marks this as virus, you have to disable it first then open https://www.virustotal.com/gui/file/fb9f42e76d792921e97cd003a565eebd1aeb5b8c542bf449980e8cbd78a8deda?nocache=1
 
 Have fun >:)
